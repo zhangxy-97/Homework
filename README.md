@@ -25,7 +25,7 @@ int* foo()
 ```
 clang -O0 -emit-llvm test.c -S -o test.ll
 ```
-但是生成的test.ll我们可以很明显地看出，alloca指令定义的%a，%b经过了多次赋值操作，这是LLVM中的一种特有现象：虚拟寄存器是SSA形式，而内存则并非SSA形式。在查阅资料的过程中了解到，这个阶段的test.ll还需要经过mem2reg pass把前端默认输出的IR转化为SSA形式，优化最终结果为test2.ll，代码如下：
+但是生成的test.ll我们可以很明显地看出，alloca指令定义的%a、%b经过了多次赋值操作，这是LLVM中的一种特有现象：虚拟寄存器是SSA形式，而内存则并非SSA形式。在查阅资料的过程中了解到，这个阶段的test.ll还需要经过mem2reg pass把前端默认输出的IR转化为SSA形式，优化最终结果为test2.ll，代码如下：
 ```
 define dso_local i32* @foo() #0 {
 entry:
@@ -53,4 +53,5 @@ if.end:                                           ; preds = %if.else, %if.then
 由于源代码中对变量a进行了取地址操作，所以：
 * a为address-taken类型变量
 * b为top-level类型变量
+
 而test2.ll中我们可以看到，a变量赋值后内存位置不变，但是b变量在if.end块中出现了%b.0形式，说明b变量赋值后内存位置发生变化，LLVM对变量b做了SSA。
